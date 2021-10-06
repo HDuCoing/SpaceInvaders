@@ -8,10 +8,14 @@ public class Main extends GameEngine {
     boolean gameOver;
     boolean fire;
 
+    double bulletX, bulletY;
+    double bulletVX, bulletVY;
     double playerX, playerY;
     double playerVX, playerVY;
 
-    // Init variables
+    int lives = 3;
+
+    // Image variables
     Image backgroundImg;
     Image planet1;
     Image planet2;
@@ -19,8 +23,14 @@ public class Main extends GameEngine {
     Image playerIMG;
     Image enemyIMG;
     Image menuIMG;
-
     Image enemyImg;
+
+    // Audio variables
+    AudioClip titleTheme;
+    AudioClip battleTheme;
+    AudioClip deathTheme;
+
+    // Width and height
     int screenW = 1000;
     int screenH = 600;
 
@@ -36,8 +46,13 @@ public class Main extends GameEngine {
         planet1 = subImage(planetSheet, 0, 0, 64, 64);
         planet2 = subImage(planetSheet, 63, 63, 64, 64);
         galaxy = subImage(planetSheet, 260, 100, 120, 120);
-        playerIMG = subImage(shipSheet, 0, 0, 10, 10);
+        playerIMG = subImage(shipSheet, 0, 0, 18, 20);
         enemyIMG = subImage(shipSheet, 10, 60, 10, 10);
+    }
+    public void loadAudio(){
+        deathTheme = loadAudio("src/Mission Over.wav");
+        titleTheme = loadAudio("src/.Title Theme.wav.icloud");
+        battleTheme = loadAudio("src/.Sunstrider.wav.icloud");
     }
 
     // Player
@@ -49,15 +64,17 @@ public class Main extends GameEngine {
     public void updatePlayer(double dt) {
         playerX += playerVX * dt;
         playerY += playerVY * dt;
-        if (playerX >= screenW || playerX <= 0) {
+        if (playerX >= screenW || playerY >= screenH) {
             gameOver = true;
-            drawMenu();
+        }
+        if (playerX <= 0 || playerY <= 0){
+            gameOver = true;
         }
         if (left) {
-            playerX = playerX - 5;
+            playerX = playerX - 10;
         }
         if (right) {
-            playerX = playerX + 5;
+            playerX = playerX + 10;
         }
 
     }
@@ -69,15 +86,18 @@ public class Main extends GameEngine {
 
     // Bullet
     public void initBullet() {
-
+        bulletX = playerX;
+        bulletY = playerY;
     }
 
-    public void updateBullet() {
-
+    public void updateBullet(double dt) {
+        bulletY = bulletY-10;
+        bulletX+=bulletVX*dt;
+        bulletY+=bulletVY*dt;
     }
 
     public void drawBullet() {
-
+        drawSolidCircle(bulletX,bulletY,5);
     }
 
     // Aliens
@@ -122,7 +142,9 @@ public class Main extends GameEngine {
     // Main game methods
     public void init() {
         fire = false;
+        gameOver = false;
         loadImages();
+        loadAudio();
         setWindowSize(screenW, screenH);
         initPlayer();
         initAliens();
@@ -133,19 +155,27 @@ public class Main extends GameEngine {
 
     @Override
     public void update(double dt) {
-        if (gameOver) {
-            drawMenu();
-        }
         updatePlayer(dt);
         updateAliens();
-        if (fire) {
-            updateBullet();
+        updateBullet(dt);
+        if (gameOver) {
+            playerVX = 0;
+            playerVY = 0;
+            drawMenu();
+        }
+        if(lives == 0){
+            gameOver = true;
         }
     }
 
     @Override
     public void paintComponent() {
-        playGame();
+        if(gameOver){
+            drawMenu();
+        }
+        else {
+            playGame();
+        }
     }
 
     // KeyPressed Event Handler
@@ -158,16 +188,18 @@ public class Main extends GameEngine {
         if (event.getKeyCode() == KeyEvent.VK_RIGHT || event.getKeyCode() == KeyEvent.VK_D) {
             right = true;
         }
-        if (event.getKeyCode() == KeyEvent.VK_F) {
+        if (event.getKeyCode() == KeyEvent.VK_SPACE) {
             fire = true;
         }
         // Play game
         if (event.getKeyCode() == KeyEvent.VK_P) {
+            gameOver = false;
             playGame();
         }
         // Quit
         if (event.getKeyCode() == KeyEvent.VK_Q) {
             mFrame.setVisible(false);
+
         }
         }
         // KeyReleased Event Handler
