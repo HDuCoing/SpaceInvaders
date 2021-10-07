@@ -2,6 +2,7 @@ package com.company;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
 
 public class Main extends GameEngine {
     boolean left, right;
@@ -12,8 +13,11 @@ public class Main extends GameEngine {
     double bulletVX, bulletVY;
     double playerX, playerY;
     double playerVX, playerVY;
+    int alienInitX = 150;
+    int alienInitY = 5;
 
     int lives = 3;
+    int score = 0;
 
     // Image variables
     Image backgroundImg;
@@ -81,7 +85,6 @@ public class Main extends GameEngine {
 
     public void drawPlayer() {
         drawImage(playerIMG, playerX, playerY, 50, 50);
-
     }
 
     // Bullet
@@ -92,11 +95,10 @@ public class Main extends GameEngine {
 
     public void updateBullet(double dt) {
         bulletY = bulletY-10;
-        bulletX+=bulletVX*dt;
-        bulletY+=bulletVY*dt;
     }
 
     public void drawBullet() {
+        changeColor(white);
         drawSolidCircle(bulletX,bulletY,5);
     }
 
@@ -133,7 +135,7 @@ public class Main extends GameEngine {
         // Draws player/effects/aliens
         drawPlayer();
         drawAliens();
-        if (fire) {
+        if(fire) {
             drawBullet();
         }
     }
@@ -148,16 +150,15 @@ public class Main extends GameEngine {
         setWindowSize(screenW, screenH);
         initPlayer();
         initAliens();
-        if (fire) {
-            initBullet();
-        }
     }
 
     @Override
     public void update(double dt) {
         updatePlayer(dt);
         updateAliens();
-        updateBullet(dt);
+        if(fire){
+            updateBullet(dt);
+        }
         if (gameOver) {
             playerVX = 0;
             playerVY = 0;
@@ -190,11 +191,13 @@ public class Main extends GameEngine {
         }
         if (event.getKeyCode() == KeyEvent.VK_SPACE) {
             fire = true;
+            initBullet();
         }
         // Play game
         if (event.getKeyCode() == KeyEvent.VK_P) {
             gameOver = false;
-            playGame();
+            clearBackground(screenW,screenH);
+            init();
         }
         // Quit
         if (event.getKeyCode() == KeyEvent.VK_Q) {
