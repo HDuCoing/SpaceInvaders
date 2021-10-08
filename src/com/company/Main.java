@@ -8,11 +8,14 @@ public class Main extends GameEngine {
     boolean left, right;
     boolean gameOver;
     boolean fire;
+    boolean alive;
+    boolean die;
+    boolean dying;
 
     double bulletX, bulletY;
-    double bulletVX, bulletVY;
     double playerX, playerY;
     double playerVX, playerVY;
+    double bossX, bossY;
     int alienInitX = 150;
     int alienInitY = 5;
 
@@ -27,7 +30,11 @@ public class Main extends GameEngine {
     Image playerIMG;
     Image enemyIMG;
     Image menuIMG;
-    Image enemyImg;
+    Image bossIMG;
+    int screenW = 1000;
+    int screenH = 600;
+    int x;
+    int y;
 
     // Audio variables
     AudioClip titleTheme;
@@ -36,10 +43,7 @@ public class Main extends GameEngine {
     AudioClip shootSound;
     AudioClip alienDeathSound;
     AudioClip explosionSound;
-
-    // Width and height
-    int screenW = 1000;
-    int screenH = 600;
+    AudioClip bossTheme;
 
     public static void main(String[] args) {
         createGame(new Main());
@@ -55,6 +59,7 @@ public class Main extends GameEngine {
         galaxy = subImage(planetSheet, 260, 100, 120, 120);
         playerIMG = subImage(shipSheet, 0, 0, 18, 20);
         enemyIMG = subImage(shipSheet, 10, 60, 10, 10);
+        bossIMG = loadImage("src/boss.png");
     }
     public void loadAudio(){
         deathTheme = loadAudio("src/Mission Over.wav");
@@ -63,9 +68,35 @@ public class Main extends GameEngine {
         shootSound = loadAudio("src/space invder sound/shoot.wav");
         alienDeathSound = loadAudio("src/space invder sound/invaderkilled.wav");
         explosionSound = loadAudio("src/space invder sound/explosion.wav");
+        bossTheme = loadAudio("src/space invder sound/11. Flanger Party.wav");
 
     }
+    public void setX(int x) {
+        this.x = x;
+    }
 
+    public void setY(int y) {
+        this.y = y;
+    }
+    public int getx() {
+        return x;
+    }
+    public int getY() {
+        return y;
+    }
+    public boolean living() {
+
+        return alive;
+    }
+    public boolean dying() {
+
+        return this.dying;
+    }
+    public boolean die() {
+
+        alive = false;
+        return alive;
+    }
     // Player
     public void initPlayer() {
         playerX = screenW * 0.5;
@@ -114,18 +145,50 @@ public class Main extends GameEngine {
     }
 
     // Aliens
-    public void initAliens() {
+    public void initAliens(){
+
+    }
+    public void updateAliens(){
+
+    }
+    public void drawAliens(){
+
+    }
+    public void drawGreens() {
+        while (gameOver == false) {
+            if (alien.living()) {
+                drawImage(Green.getImage(), Green.getX(), Green.getY(), this);
+            }
+            if (Green.dying()) {
+                Green.die();
+            }
+        }
+    }
+    public void drawReds() {
+        while (gameOver == false) {
+            if (alien.living()) {
+                drawImage(Red.getImage(), Red.getX(), Red.getY(), this);
+            }
+            if (Red.dying()) {
+                Red.die();
+            }
+        }
+    }
+    // Boss level ending
+    public void initBoss() {
+        playAudio(bossTheme);
+        bossX = screenW * 0.5;
+        bossY = screenH * 0.5;
 
     }
 
-    public void updateAliens() {
+    public void updateBoss() {
 
     }
 
-    public void drawAliens() {
-
+    public void drawBoss() {
+        drawImage(bossIMG, bossX, bossY, 100,100);
     }
-
     // Menu
     public void drawMenu() {
         clearBackground(screenW, screenH);
@@ -155,11 +218,11 @@ public class Main extends GameEngine {
     @Override
     // Main game methods
     public void init() {
-        playAudio(battleTheme);
         fire = false;
         gameOver = false;
         loadImages();
         loadAudio();
+        playAudio(battleTheme);
         setWindowSize(screenW, screenH);
         initPlayer();
         initAliens();
