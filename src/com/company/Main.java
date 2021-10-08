@@ -33,6 +33,9 @@ public class Main extends GameEngine {
     AudioClip titleTheme;
     AudioClip battleTheme;
     AudioClip deathTheme;
+    AudioClip shootSound;
+    AudioClip alienDeathSound;
+    AudioClip explosionSound;
 
     // Width and height
     int screenW = 1000;
@@ -55,8 +58,12 @@ public class Main extends GameEngine {
     }
     public void loadAudio(){
         deathTheme = loadAudio("src/Mission Over.wav");
-        titleTheme = loadAudio("src/.Title Theme.wav.icloud");
-        battleTheme = loadAudio("src/.Sunstrider.wav.icloud");
+        titleTheme = loadAudio("src/space invder sound/9. Space Invaders.wav");
+        battleTheme = loadAudio("src/space invder sound/9. Space Invaders.wav");
+        shootSound = loadAudio("src/space invder sound/shoot.wav");
+        alienDeathSound = loadAudio("src/space invder sound/invaderkilled.wav");
+        explosionSound = loadAudio("src/space invder sound/explosion.wav");
+
     }
 
     // Player
@@ -86,15 +93,19 @@ public class Main extends GameEngine {
     public void drawPlayer() {
         drawImage(playerIMG, playerX, playerY, 50, 50);
     }
-
     // Bullet
     public void initBullet() {
+        playAudio(shootSound);
         bulletX = playerX;
         bulletY = playerY;
     }
 
     public void updateBullet(double dt) {
         bulletY = bulletY-10;
+        // Allows to only fire 1 bullet until bullets left the screen
+        if(bulletY <= 0){
+            fire = false;
+        }
     }
 
     public void drawBullet() {
@@ -123,6 +134,7 @@ public class Main extends GameEngine {
         drawText(350, 100, "Space Invaders");
         drawText(50, screenH * 0.5, "P to Play Game");
         drawText(50, screenH * 0.5 + 50, "Q to Quit");
+        drawText(screenW-150, 30, "Score: "+ score, "Font.PLAIN", 12);
     }
 
     public void playGame() {
@@ -143,6 +155,7 @@ public class Main extends GameEngine {
     @Override
     // Main game methods
     public void init() {
+        playAudio(battleTheme);
         fire = false;
         gameOver = false;
         loadImages();
@@ -156,6 +169,7 @@ public class Main extends GameEngine {
     public void update(double dt) {
         updatePlayer(dt);
         updateAliens();
+        drawText(screenW-150, 30, "Score: "+ score, "Font.PLAIN", 12);
         if(fire){
             updateBullet(dt);
         }
@@ -190,8 +204,10 @@ public class Main extends GameEngine {
             right = true;
         }
         if (event.getKeyCode() == KeyEvent.VK_SPACE) {
-            fire = true;
-            initBullet();
+            if(!fire) {
+                fire = true;
+                initBullet();
+            }
         }
         // Play game
         if (event.getKeyCode() == KeyEvent.VK_P) {
