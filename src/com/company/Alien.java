@@ -1,6 +1,5 @@
 package com.company;
 
-
 public class Alien{
     public final double created;
     double x;

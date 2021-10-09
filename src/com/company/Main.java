@@ -3,6 +3,7 @@ package com.company;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -11,13 +12,16 @@ public class Main extends GameEngine {
     boolean gameOver;
     boolean fire;
     boolean destroyed;
+    boolean hit;
     int bossHealth = 10;
+    boolean enemyFire;
 
     double bulletX, bulletY;
     double playerX, playerY;
     double playerVX, playerVY;
     double bossX, bossY;
     double alienX, alienY;
+    double enemyBulletX, enemyBulletY;
 
     int lives = 3;
     int score = 0;
@@ -62,14 +66,13 @@ public class Main extends GameEngine {
         bossIMG = loadImage("src/boss.png");
     }
     public void loadAudio(){
-        deathTheme = loadAudio("src/Mission Over.wav");
-        titleTheme = loadAudio("src/space invder sound/9. Space Invaders.wav");
+        deathTheme = loadAudio("src/space invder sound/Mission Over.wav");
+        titleTheme = loadAudio("src/space invder sound/5. Romance on Neon.wav");
         battleTheme = loadAudio("src/space invder sound/9. Space Invaders.wav");
         shootSound = loadAudio("src/space invder sound/shoot.wav");
         alienDeathSound = loadAudio("src/space invder sound/invaderkilled.wav");
         explosionSound = loadAudio("src/space invder sound/explosion.wav");
         bossTheme = loadAudio("src/space invder sound/11. Flanger Party.wav");
-
     }
     // Player
     public void initPlayer() {
@@ -105,7 +108,7 @@ public class Main extends GameEngine {
         bulletY = playerY;
     }
 
-    public void updateBullet(double dt) {
+    public void updateBullet() {
         bulletY = bulletY-10;
         // Allows to only fire 1 bullet until bullets left the screen
         if(bulletY <= 0){
@@ -122,19 +125,35 @@ public class Main extends GameEngine {
     public void initAliens(){
         alienX = 400;
         alienY = 300;
+        enemyFire = true;
+        hit = false;
         destroyed = false;
     }
     public void updateAliens(){
         // collision here
+        if(hit){
+            alienList.remove(0);
+            hit = false;
+            score=score+1;
+        }
         for (Alien alien : alienList) {
-            alien.y = alien.y+1;
-            if (bulletX == alien.x + 15 && bulletY == alien.y + 10) {
-                destroyed = true;
-                fire = false;
-                alienList.remove(alien);
+            alien.y = alien.y+0.5;
+            for(double i=alien.x;i<alien.x+25;i++){
+                for(double j=alien.y;j<alien.y+25;j++){
+                    if (bulletX == i && bulletY == j) {
+                        fire = false;
+                        hit = true;
+                        playAudio(explosionSound);
+                    }
+                    if(alien.y >= screenH){
+                        lives = lives-1;
+                    }
+                }
             }
         }
-
+        if(alienList.isEmpty()){
+            destroyed = true;
+        }
     }
     public void drawAliens(){
         if(!destroyed) {
@@ -144,47 +163,55 @@ public class Main extends GameEngine {
             }
         }
     }
-
-
     // Boss level ending
     public void initBoss() {
-        stopAudioLoop(battleTheme);
-        startAudioLoop(bossTheme);
-        bossX = screenW * 0.5;
-        bossY = screenH * 0.5;
-
+        bossX = 450;
+        bossY = 100;
+        enemyFire = true;
+        hit = false;
+        enemyBulletX = bossX;
+        enemyBulletY = bossY;
     }
 
     public void updateBoss() {
-        bossX = bossX-10;
-        timer.setDelay(10);
-        bossX = bossX+10;
+        if(enemyBulletY <= screenH){
+            enemyFire = false;
+        }
+        if(enemyFire){
+            enemyBulletY = enemyBulletY-3;
+        }
     }
 
     public void drawBoss() {
-        drawImage(bossIMG, bossX, bossY, 100,100);
+        drawImage(bossIMG, bossX, bossY, 150,150);
+        if(enemyFire){
+            changeColor(red);
+            drawCircle(enemyBulletX, enemyBulletY, 20);
+        }
     }
     // Menu
     public void drawMenu() {
         stopAudioLoop(battleTheme);
         stopAudioLoop(bossTheme);
+        startAudioLoop(titleTheme);
         clearBackground(screenW, screenH);
         drawImage(menuIMG, 0, 0, screenW, screenH);
         changeColor(white);
         drawText(350, 100, "Space Invaders");
         drawText(50, screenH * 0.5, "P to Play Game");
         drawText(50, screenH * 0.5 + 50, "Q to Quit");
-        drawText(screenW-150, 30, "Score: "+ score, "Font.PLAIN", 12);
+        drawText(screenW-150, 30, "Score: "+ score, "Font.PLAIN", 16);
     }
 
     public void playGame() {
         // Set up background
+        stopAudioLoop(titleTheme);
+        stopAudioLoop(bossTheme);
         clearBackground(screenW, screenH);
         drawImage(backgroundImg, 0, 0, screenW, screenH);
         drawImage(galaxy, screenW - 175.0, 200, 300, 300);
         drawImage(planet1, 0, 0, 150, 150);
         drawImage(planet2, screenW - 100.0, 0, 100, 100);
-        // Draws player/effects/aliens
         drawPlayer();
         drawAliens();
         if(fire) {
@@ -206,7 +233,7 @@ public class Main extends GameEngine {
         initAliens();
         if(alienList.isEmpty()){
             for(int i=0;i<10;i++){
-                int randomNum = ThreadLocalRandom.current().nextInt(50, screenW + 1);
+                int randomNum = ThreadLocalRandom.current().nextInt(50, screenW-50 + 1);
                 alienList.add(new Alien(10,randomNum,0));
             }
         }
@@ -217,8 +244,12 @@ public class Main extends GameEngine {
         updatePlayer(dt);
         updateAliens();
         drawText(screenW-150, 30, "Score: "+ score, "Font.PLAIN", 12);
+        if(alienList.isEmpty()) {
+            initBoss();
+            updateBoss();
+        }
         if(fire){
-            updateBullet(dt);
+            updateBullet();
         }
         if (gameOver) {
             playerVX = 0;
@@ -237,6 +268,9 @@ public class Main extends GameEngine {
         }
         else {
             playGame();
+        }
+        if(alienList.isEmpty()) {
+            drawBoss();
         }
     }
 
@@ -258,8 +292,6 @@ public class Main extends GameEngine {
         }
         // Play game
         if (event.getKeyCode() == KeyEvent.VK_P) {
-            stopAudioLoop(battleTheme);
-            stopAudioLoop(bossTheme);
             gameOver = false;
             clearBackground(screenW,screenH);
             init();
