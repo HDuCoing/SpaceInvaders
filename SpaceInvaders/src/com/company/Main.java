@@ -3,7 +3,6 @@ package com.company;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -35,8 +34,12 @@ public class Main extends GameEngine {
     Image galaxy;
     Image playerIMG;
     Image enemyIMG;
-    Image menuIMG;
+    Image gameOverIMG;
     Image bossIMG;
+    Image winIMG;
+    Image bulletIMG;
+    Image enemyBulletIMG;
+    Image explosionIMG;
     int screenW = 1000;
     int screenH = 600;
 
@@ -50,14 +53,14 @@ public class Main extends GameEngine {
     AudioClip bossTheme;
 
     private List<Alien> alienList;
-
     public static void main(String[] args) {
         createGame(new Main());
     }
 
     public void loadImages() {
         backgroundImg = loadImage("src/space_background.png");
-        menuIMG = loadImage("src/menu_Background.png");
+        gameOverIMG = loadImage("src/gameover.png");
+        winIMG = loadImage("src/won.jpg");
         Image planetSheet = loadImage("src/Planets.png");
         Image shipSheet = loadImage("src/SpaceShipAsset.png");
         planet1 = subImage(planetSheet, 0, 0, 64, 64);
@@ -66,6 +69,9 @@ public class Main extends GameEngine {
         playerIMG = subImage(shipSheet, 0, 0, 18, 20);
         enemyIMG = subImage(shipSheet, 20, 45, 15, 10);
         bossIMG = loadImage("src/boss.png");
+        bulletIMG = loadImage("src/shot.png");
+        enemyBulletIMG = loadImage("src/bomb.png");
+        explosionIMG = loadImage("src/explosion.png");
     }
     public void loadAudio(){
         deathTheme = loadAudio("src/space invder sound/Mission Over.wav");
@@ -75,6 +81,19 @@ public class Main extends GameEngine {
         alienDeathSound = loadAudio("src/space invder sound/invaderkilled.wav");
         explosionSound = loadAudio("src/space invder sound/explosion.wav");
         bossTheme = loadAudio("src/space invder sound/11. Flanger Party.wav");
+    }
+    public void drawMenu() {
+        clearBackground(screenW, screenH);
+        if(gameOver) {
+            drawImage(gameOverIMG, 0, 0, screenW, screenH);
+        }
+        else if(bossHealth <= 0){
+            drawImage(winIMG, 0, 0, screenW, screenH);
+        }
+        changeColor(white);
+        drawText(350, 100, "Space Invaders");
+        drawText(50, screenH * 0.5, "P to Play Game");
+        drawText(50, screenH * 0.5 + 50, "Q to Quit");
     }
     // Player
     public void initPlayer() {
@@ -96,6 +115,9 @@ public class Main extends GameEngine {
         }
         if (right) {
             playerX = playerX + 10;
+        }
+        if(lives <= 0){
+            gameOver=true;
         }
 
     }
@@ -119,9 +141,7 @@ public class Main extends GameEngine {
     }
 
     public void drawBullet() {
-        changeColor(white);
-        drawSolidCircle(bulletX,bulletY,5);
-
+        drawImage(bulletIMG, bulletX, bulletY,20,20);
     }
     //enemy fire
     public void initEnemyFire(){
@@ -141,9 +161,8 @@ public class Main extends GameEngine {
         }
     }
     public void drawEnemyFire(){
-        changeColor(red);
-        drawSolidCircle(enemyBulletX, enemyBulletY, 10);
-    }
+        drawImage(enemyBulletIMG, enemyBulletX, enemyBulletY, 20,20);
+      }
     // Aliens
     public void initAliens(){
         alienX = 400;
@@ -165,7 +184,7 @@ public class Main extends GameEngine {
             alienList.remove(0);
         }
         for (Alien alien : alienList) {
-            alien.y = alien.y+2;
+            alien.y = alien.y+0.5;
             for(double i=alien.x;i<alien.x+25;i++){
                 for(double j=alien.y;j<alien.y+25;j++){
                     if (bulletX == i && bulletY == j) {
@@ -189,6 +208,9 @@ public class Main extends GameEngine {
             for (Alien alien : alienList) {
                 drawImage(enemyIMG, alien.x, alien.y, 45, 45);
             }
+        }
+        if(hit){
+            drawImage(explosionIMG,bulletX,bulletY,30,30);
         }
     }
     // Boss level ending
@@ -217,16 +239,7 @@ public class Main extends GameEngine {
     public void drawBoss() {
         drawImage(bossIMG, bossX, bossY, 150,150);
     }
-    // Menu
-    public void drawMenu() {
-        clearBackground(screenW, screenH);
-        drawImage(menuIMG, 0, 0, screenW, screenH);
-        changeColor(white);
-        drawText(350, 100, "Space Invaders");
-        drawText(50, screenH * 0.5, "P to Play Game");
-        drawText(50, screenH * 0.5 + 50, "Q to Quit");
-        drawText(screenW-150, 30, "Score: "+ score, "Font.PLAIN", 16);
-    }
+
 
     public void playGame() {
         // Set up background
@@ -270,6 +283,8 @@ public class Main extends GameEngine {
             for(int i=0;i<10;i++){
                 int randomNum = ThreadLocalRandom.current().nextInt(50, screenW-50 + 1);
                 alienList.add(new Alien(10,randomNum,0));
+                alienList.add(new Alien(10,randomNum,50));
+                alienList.add(new Alien(10,randomNum,120));
             }
         }
         if(destroyed){
@@ -294,7 +309,7 @@ public class Main extends GameEngine {
         if(lives == 0){
             gameOver = true;
         }
-        if (gameOver) {
+        if (gameOver || bossHealth <= 0) {
             playerVX = 0;
             playerVY = 0;
             drawMenu();
@@ -303,12 +318,7 @@ public class Main extends GameEngine {
 
     @Override
     public void paintComponent() {
-        if(gameOver){
-            drawMenu();
-        }
-        else {
-            playGame();
-        }
+        playGame();
     }
 
     // KeyPressed Event Handler
